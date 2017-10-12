@@ -5,10 +5,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 public class homework {
@@ -70,7 +69,10 @@ public class homework {
 			return "["+row+","+col+"]";	
 		}
 	}
+    static int countMax=0;
+    static int countMin=0;
     static int count=0;
+
 	static int size=0;
 	static float timeleft=0;
 	static State maxMove=null;
@@ -95,17 +97,22 @@ public class homework {
 				row++;
 			}
 
-			
 			long t1=System.currentTimeMillis();
 			int minMaxValue = MaxValue(new State(PLAY, 0, 0), Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
 			long t2=System.currentTimeMillis();
+			
 			System.out.println("MILIS:"+(t2-t1));
 			
 			System.out.println("MINMAXVALUE::"+minMaxValue);
+			System.out.println("COUNTMIN::"+countMin);
+			System.out.println("COUNTMAX::"+countMax);
+			System.out.println("TOTAL:"+(countMax+countMin));
 			System.out.println("COUNT::"+count);
+
            // printMatrix(PLAY);
             //Print selection for next move
 			char[][] newConfig=maxMove.getConfig();
+			int score=maxMove.xScore-maxMove.yScore;//TODO:remove it ------
 			
 			int p=0,q=0;
 			boolean found=false;
@@ -120,7 +127,8 @@ public class homework {
 					break;
 			}
 			
-			writeOutput(newConfig,p,q);
+			//printMatrix(newConfig);
+			writeOutput(newConfig,p,q,score);
             
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -134,10 +142,12 @@ public class homework {
 	}
 
 	private static int MaxValue(State state, int alpha, int beta, int depth) {
-		count++;
+		countMax++;
+		//System.out.println("MAX IN DEPTH"+depth);
 		//CUT-OFF TEST
 		if(depth==MAX_DEPTH || isBoardEmpty(state)) {
-		  return (state.getxScore()-state.getyScore());	
+			//System.out.println("MAX IS LEAF");
+			return (state.getxScore()-state.getyScore());	
 		}
 		int temp_alpha=Integer.MIN_VALUE;
 		List<State> sucessors = generateSuccessors(state,true);
@@ -146,30 +156,37 @@ public class homework {
 			temp_alpha = Math.max(alpha, MinValue(s, alpha, beta, depth + 1));
 			
 			if(depth==0) {
-			  	if(temp_alpha!=alpha)
-			  		maxMove=s;
+				if(temp_alpha!=alpha)
+					maxMove=s;
 			}
 			
 			alpha=temp_alpha;
 			
-			if (alpha >= beta)
+			if (alpha >= beta) {
+			count++;
 				return beta;
+				}
 		}
 		return alpha;
 	}
 
 	private static int MinValue(State state, int alpha, int beta, int depth) {
-		count++;
+		countMin++;
+		//System.out.println("MIN IN DEPTH"+depth);
+
 		// CUT-OFF TEST
 		if (depth == MAX_DEPTH || isBoardEmpty(state)) {
+			//System.out.println("MIN IS LEAF");
 			return (state.getxScore() - state.getyScore());
 		}
 		
 		List<State> sucessors = generateSuccessors(state,false);
 		for (State s : sucessors) {
 			beta = Math.min(beta, MaxValue(s, alpha, beta, depth + 1));
-			if (beta <= alpha)
+			if (beta <= alpha) {
+				count++;
 				return alpha;
+			}
 		}
 		return beta;
 	}
@@ -187,7 +204,7 @@ public class homework {
 				segments.add(points);
 			}
 		}
-
+		
 		// Keep max scoring ply on right of the tree
 		Collections.sort(segments, new Comparator<List<Point>>() {
 			public int compare(List<Point> l1, List<Point> l2) {
@@ -199,6 +216,25 @@ public class homework {
 			}
 		});
 
+		int size=0;
+		for(List s:segments) {
+			size=size=s.size();
+		}
+		
+		int t=size/segments.size();
+		
+		Iterator iter=segments.iterator();
+		
+		while (iter.hasNext()) {
+			List s =  (List) iter.next();
+
+			if (s.size() < t) {
+				segments.remove(s);
+			}
+
+		}
+		
+		
 		List<State> states = new ArrayList<State>();
 		State s = null;
 		int changes = 0;
@@ -298,7 +334,9 @@ public class homework {
 		if (j-1>=0 && val == config[i][j-1]) {
 			 generateSegments(config, s, i, j-1);
 		}
-		
+		if (i-1>=0 && val == config[i-1][j]) {
+			 generateSegments(config, s, i-1, j);
+		}
 	}
 	
 	private static char[][] arrayCopier(char[][] src) {
@@ -330,14 +368,17 @@ public class homework {
 		return true;
 	}
 	
-	private static void writeOutput(char[][] newConfig, int p, int q) throws IOException {
+	private static void writeOutput(char[][] newConfig, int p, int q,int score) throws IOException {
 		BufferedWriter bw = null;
 		try {
 			StringBuilder str=new StringBuilder("");
 			bw = new BufferedWriter(new FileWriter("src\\output.txt"));
 			bw.write((char)(q+65));
 			bw.write(String.valueOf(p+1));	
-			bw.newLine();		
+			bw.newLine();	
+			bw.write(String.valueOf(score));	
+			bw.newLine();	
+
 			for (int i = 0; i < size; i++) {
 				for (int j = 0; j < size; j++) {
 					str.append(newConfig[i][j]);
