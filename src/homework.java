@@ -7,8 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class homework {
 
@@ -76,7 +77,9 @@ public class homework {
 	static int size=0;
 	static float timeleft=0;
 	static State maxMove=null;
-	static int MAX_DEPTH=4;
+	static int MAX_DEPTH=6;
+	static Map<State,String> fruitToPick=new HashMap<State,String>();
+	
 	public static void main(String[] args) {
 		BufferedReader bf = null;
 		try {
@@ -109,12 +112,11 @@ public class homework {
 			System.out.println("TOTAL:"+(countMax+countMin));
 			System.out.println("COUNT::"+count);
 
-           // printMatrix(PLAY);
             //Print selection for next move
 			char[][] newConfig=maxMove.getConfig();
 			int score=maxMove.xScore-maxMove.yScore;//TODO:remove it ------
-			
-			int p=0,q=0;
+			//System.out.println("SCORE:"+score);
+			/*int p=0,q=0;
 			boolean found=false;
 			for(p=size-1;p>=0;p--) {
 				for(q=size-1;q>=0;q--) {
@@ -125,10 +127,11 @@ public class homework {
 				}
 				if(found==true)
 					break;
-			}
+			}*/
 			
 			//printMatrix(newConfig);
-			writeOutput(newConfig,p,q,score);
+			//writeOutput(newConfig,p,q,score);
+			writeOutput(newConfig,score,fruitToPick.get(maxMove));
             
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -150,8 +153,9 @@ public class homework {
 			return (state.getxScore()-state.getyScore());	
 		}
 		int temp_alpha=Integer.MIN_VALUE;
-		List<State> sucessors = generateSuccessors(state,true);
-		
+		List<State> sucessors = generateSuccessors(state,true,depth);
+		//System.out.println("DEPTH-"+depth+"::::succssors-"+sucessors.size());
+
 		for (State s : sucessors) {
 			temp_alpha = Math.max(alpha, MinValue(s, alpha, beta, depth + 1));
 			
@@ -163,7 +167,7 @@ public class homework {
 			alpha=temp_alpha;
 			
 			if (alpha >= beta) {
-			count++;
+			    count++;
 				return beta;
 				}
 		}
@@ -179,8 +183,9 @@ public class homework {
 			//System.out.println("MIN IS LEAF");
 			return (state.getxScore() - state.getyScore());
 		}
-		
-		List<State> sucessors = generateSuccessors(state,false);
+		List<State> sucessors = generateSuccessors(state,false,depth);
+		//System.out.println("DEPTH-"+depth+"::::succssors-"+sucessors.size());
+
 		for (State s : sucessors) {
 			beta = Math.min(beta, MaxValue(s, alpha, beta, depth + 1));
 			if (beta <= alpha) {
@@ -191,7 +196,7 @@ public class homework {
 		return beta;
 	}
 
-	private static List<State> generateSuccessors(State state, boolean isMax) {
+	private static List<State> generateSuccessors(State state, boolean isMax,int depth) {
 		char[][] config = arrayCopier(state.getConfig());
 		List<List<Point>> segments = new ArrayList<List<Point>>();
 		// generate segments
@@ -207,34 +212,19 @@ public class homework {
 		
 		// Keep max scoring ply on right of the tree
 		Collections.sort(segments, new Comparator<List<Point>>() {
-			public int compare(List<Point> l1, List<Point> l2) {
+			/*public int compare(List<Point> l1, List<Point> l2) {
 				if (l1.size() > l2.size())
 					return -1;
 				if (l1.size() < l2.size())
 					return 1;
 				return 0;
 			}
+			*/
+			 public int compare(List<Point> l1, List<Point> l2) {
+	                return l2.size() - l1.size();
+	            }
 		});
 
-		int size=0;
-		for(List s:segments) {
-			size=size=s.size();
-		}
-		
-		int t=size/segments.size();
-		
-		Iterator iter=segments.iterator();
-		
-		while (iter.hasNext()) {
-			List s =  (List) iter.next();
-
-			if (s.size() < t) {
-				segments.remove(s);
-			}
-
-		}
-		
-		
 		List<State> states = new ArrayList<State>();
 		State s = null;
 		int changes = 0;
@@ -243,10 +233,17 @@ public class homework {
 		for (List<Point> list : segments) {
 			changes =list.size();
 			config = arrayCopier(state.getConfig());
+			int a=list.get(0).row;
+			int b=list.get(0).col;
 			for (Point p : list) {
 				config[p.row][p.col] = '*';
 			}
 
+			/*bw.write((char)(b+65));
+			bw.write(String.valueOf(a+1))
+			*/
+			
+			
 			//apply gravity----> change matrix
 			//System.out.println("---------------------------------------");
 			//printMatrix(config);
@@ -262,8 +259,14 @@ public class homework {
 				s.setyScore(s.getyScore() + changes * changes);
 			}
 			states.add(s);
+			if (depth==0) {
+				String fruit = String.valueOf((char) (b + 65)) + String.valueOf(a + 1);
+				fruitToPick.put(s, fruit);
+			}
 		}
 		
+		//flag = false;
+
 		/*// Print segments
 		System.out.println(segments.size());
 		for (List<Point> p : segments) {
@@ -339,11 +342,21 @@ public class homework {
 		}
 	}
 	
-	private static char[][] arrayCopier(char[][] src) {
+/*	private static char[][] arrayCopier(char[][] src) {
 		char[][] dest = new char[size][size];
 		for (int i = 0; i < dest.length; i++) {
 			dest[i] = new char[size];
 			System.arraycopy(src[i], 0, dest[i], 0, size);
+		}
+		return dest;
+	}*/
+	
+	private static char[][] arrayCopier(char[][] src) {
+		char[][] dest = new char[size][size];
+		for (int i = 0; i < dest.length; i++) {
+			for(int j = 0; j < dest.length; j++) {
+				dest[i][j]=src[i][j];
+			}
 		}
 		return dest;
 	}
@@ -368,17 +381,23 @@ public class homework {
 		return true;
 	}
 	
-	private static void writeOutput(char[][] newConfig, int p, int q,int score) throws IOException {
+	private static void writeOutput(char[][] newConfig,int score,String f) throws IOException {// int p, int q
 		BufferedWriter bw = null;
 		try {
 			StringBuilder str=new StringBuilder("");
 			bw = new BufferedWriter(new FileWriter("src\\output.txt"));
-			bw.write((char)(q+65));
+			/*bw.write((char)(q+65));
 			bw.write(String.valueOf(p+1));	
-			bw.newLine();	
-			bw.write(String.valueOf(score));	
-			bw.newLine();	
+			bw.newLine();*/
+			bw.write(f);	///remove 
+			bw.newLine();
+			
+			
+			bw.write(String.valueOf(score));	///remove 
+			bw.newLine();	//remove
 
+			//output fruit to select
+			
 			for (int i = 0; i < size; i++) {
 				for (int j = 0; j < size; j++) {
 					str.append(newConfig[i][j]);

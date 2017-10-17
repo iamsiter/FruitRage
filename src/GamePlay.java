@@ -6,7 +6,7 @@ import java.util.Comparator;
 
 public class GamePlay implements contract {
 
-    public  static int plyValue =4;
+    public  static int plyValue =6;
     public static String INPUT_FILE_NAME = "src\\input.txt";
     public static String OUTPUT_FILE_NAME = "src\\output.txt";
     public static int boardSize = 0;
@@ -43,8 +43,13 @@ public class GamePlay implements contract {
 //        System.out.println("Showing Board");
 //        showBoard(board);
         isXscore=true;
+        long ts=System.currentTimeMillis();
         GamePlay gamePlay = new GamePlay(boardSize, numberOfFruits, timeLeft, board);
         char[][] board = gamePlay.getSolutionForBoard(isXscore);
+        long tf=System.currentTimeMillis();
+		System.out.println("MILISSSSSSSSSSSS:"+(tf-ts));
+
+        
 //        System.out.println("The solution board is: ");
 //        showBoard(board);
 //        System.out.println();
@@ -173,7 +178,7 @@ public class GamePlay implements contract {
         if(allMoves.isEmpty())
             moveScore = 0;
         long after = System.currentTimeMillis();
-//        System.out.println("Time taken: "+(after-before)+"ms");
+        System.out.println("Time taken: "+(after-before)+"ms");
         if(!allMoves.isEmpty()) {
 //            System.out.println("Optimal Move for " + (isXscore ? "X" : "Y") + " was: " + allMoves.get(optimalMoveNumber).getPoints().get(0));
             moveScore = (int) Math.pow(allMoves.get(optimalMoveNumber).getSize(), 2);
@@ -295,6 +300,7 @@ public class GamePlay implements contract {
     }
 
     public ArrayList<Move> getAllMoves(char[][] board) {
+    	long ts=System.currentTimeMillis();
         ArrayList<Move> allMoves = new ArrayList<Move>();
 //        for (int i = boardSize - 1; i >= 0; i--) {
 //            for (int j = 0; j < boardSize; j++) {
@@ -312,6 +318,11 @@ public class GamePlay implements contract {
                 }
             }
         }
+        
+    	long tf=System.currentTimeMillis();
+        //System.out.println("milllis"+(tf-ts));
+        
+        
         return allMoves;
     }
 
@@ -484,8 +495,6 @@ public class GamePlay implements contract {
                         }
                     }
                 }
-
-
             }
         }
 
